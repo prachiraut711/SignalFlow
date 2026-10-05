@@ -97,6 +97,7 @@ Standard infrastructure monitoring (e.g., server CPU, memory, disk) often fails 
 | **Analytics APIs** | **Completed** | Aggregation endpoints for `/api/analytics/overview`, `/api/analytics/services`, and 1-minute `/windows` |
 | **Database Connectors** | **Completed** | PostgreSQL relational storage via SQLAlchemy with automatic local SQLite fallback for dev |
 | **Anomaly Detection** | **Completed** | Dual-layer detection: Statistical (Z-score + % change) & ML (Isolation Forest) with deduplication |
+| **Signal Correlation** | **Completed** | Correlates related anomalies into incident signals (`OPEN`/`RESOLVED`) with 10-min windowing |
 | **Frontend Starter** | **Completed** | React + TypeScript + Vite + Tailwind CSS SaaS starter layout with backend health monitoring |
 | **Analytical Dashboard** | *Planned* | Real-time charts, event tables, and metric breakdowns |
 | **Gemini Diagnostics** | *Planned* | LLM-driven root-cause incident summaries |
@@ -123,14 +124,14 @@ SignalFlow/
 │   │   ├── __init__.py
 │   │   ├── main.py          # FastAPI application & lifespan management
 │   │   ├── config.py        # Pydantic Settings configuration
-│   │   ├── api/             # API routes (health, events, analytics, anomalies)
+│   │   ├── api/             # API routes (health, events, analytics, anomalies, signals)
 │   │   ├── db/              # Database connectors (PostgreSQL/SQLite, Redis, DuckDB)
-│   │   ├── models/          # SQLAlchemy models (AnomalyRecord)
+│   │   ├── models/          # SQLAlchemy models (AnomalyRecord, SignalRecord, SignalAnomaly)
 │   │   ├── schemas/         # Pydantic request/response validation schemas
-│   │   ├── services/        # Business logic (EventService, AnalyticsService, AnomalyService)
+│   │   ├── services/        # Business logic (Event, Analytics, Anomaly, Signal)
 │   │   ├── workers/         # Background stream consumers (EventWorker)
 │   │   └── ml/              # Statistical & Isolation Forest anomaly detectors
-│   ├── tests/               # Pytest suite (30 unit & integration tests)
+│   ├── tests/               # Pytest suite (44 unit & integration tests)
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── docs/                     # Architecture & specifications
@@ -266,7 +267,35 @@ SignalFlow incorporates a **dual-layer anomaly detection architecture** designed
 
 ---
 
-## 9. Running Tests
+## 9. Signal Correlation & Incidents (Phase 5)
+
+Anomalies represent individual abnormal metrics (e.g., error rate spike or latency degradation). **Signals** group multiple related anomalies into a single, cohesive operational incident using service, region, and sliding time-proximity windows.
+
+```text
+error_rate spike (CRITICAL)
+          +
+latency spike (CRITICAL)
+          ↓
+Payment Service Degradation (CRITICAL, OPEN)
+```
+
+- **Correlation Rules**: Clusters unlinked anomalies sharing the same `service`, `region`, and detected within a dynamic **10-minute** window.
+- **Deterministic Incident Titling**:
+  - `error_rate` only $\rightarrow$ `Payment Service Error Spike`
+  - `average_latency_ms` only $\rightarrow$ `Payment Service Latency Degradation`
+  - `error_rate` + `average_latency_ms` $\rightarrow$ `Payment Service Degradation`
+  - `event_count` $\rightarrow$ `Payment Service Traffic Anomaly`
+- **Severity Aggregation**: Highest priority among attached anomalies (`CRITICAL` > `HIGH` > `WARNING` > `INFO`).
+- **Incident Lifecycle**: Supports transition from `OPEN` to `RESOLVED` while preserving full historical anomaly audit trails.
+- **REST Endpoints**:
+  - `GET /api/signals`: Query signals with filtering (`severity`, `status`, `service`, `region`, `limit`).
+  - `GET /api/signals/{id}`: Detailed signal representation with all attached raw anomalies.
+  - `POST /api/signals/correlate`: Trigger manual anomaly correlation scan.
+  - `POST /api/signals/{id}/resolve`: Resolve an operational incident.
+
+---
+
+## 10. Running Tests
 
 ### Backend Tests
 From the `backend` directory (with active virtual environment):
@@ -276,7 +305,7 @@ pytest -v
 
 ---
 
-## 10. Design Philosophy
+## 11. Design Philosophy
 
 * **Medium Complexity & Interview-Focused**: Architected with enterprise best practices (type-safety, modular structure, asynchronous I/O, clean separation of concerns) without unnecessary complexity or tool sprawl (no Kafka/Kubernetes/Spark where lightweight alternatives like Redis Streams and DuckDB excel).
 * **Independent Execution**: Frontend and Backend are decoupled and can run or be tested entirely independently.

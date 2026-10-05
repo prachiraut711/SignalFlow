@@ -37,5 +37,5 @@ class AnomalyRecord(Base):
     reason = Column(Text, nullable=False)
 
     __table_args__ = (
-        UniqueConstraint("service", "time_window", "metric", name="uq_service_window_metric"),
+        UniqueConstraint("service", "region", "time_window", "metric", name="uq_service_region_window_metric"),
     )

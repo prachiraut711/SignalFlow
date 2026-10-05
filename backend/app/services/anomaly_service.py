@@ -122,9 +122,10 @@ class AnomalyService:
 
             if stat_res:
                 stat_anomaly_found = True
-                # Deduplication check: check if anomaly already persisted for (service, time_window, metric)
+                # Deduplication check: check if anomaly already persisted for (service, region, time_window, metric)
                 existing = session.query(AnomalyRecord).filter(
                     AnomalyRecord.service == service,
+                    AnomalyRecord.region == region,
                     AnomalyRecord.time_window == time_window,
                     AnomalyRecord.metric == metric,
                 ).first()
@@ -152,6 +153,7 @@ class AnomalyService:
         if iso_result.get("is_anomaly") and not stat_anomaly_found:
             existing = session.query(AnomalyRecord).filter(
                 AnomalyRecord.service == service,
+                AnomalyRecord.region == region,
                 AnomalyRecord.time_window == time_window,
                 AnomalyRecord.metric == "composite",
             ).first()

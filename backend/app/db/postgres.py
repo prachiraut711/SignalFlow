@@ -13,7 +13,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
 from app.config import get_settings
-from app.models.anomaly import Base
+from app.models import Base
 
 logger = logging.getLogger(__name__)
 

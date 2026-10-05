@@ -10,6 +10,13 @@ from app.schemas.anomaly import (
     AnomalyResponse,
     DetectionRunResponse,
 )
+from app.schemas.signal import (
+    SignalStatus,
+    SignalSeverity,
+    SignalResponse,
+    SignalDetailResponse,
+    SignalCorrelationResponse,
+)
 
 __all__ = [
     "HealthResponse",
@@ -23,4 +30,9 @@ __all__ = [
     "SeverityLevel",
     "AnomalyResponse",
     "DetectionRunResponse",
+    "SignalStatus",
+    "SignalSeverity",
+    "SignalResponse",
+    "SignalDetailResponse",
+    "SignalCorrelationResponse",
 ]
