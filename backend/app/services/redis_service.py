@@ -91,6 +91,68 @@ class RedisService:
             logger.error(f"Failed to read from stream {stream_name}: {exc}")
             return []
 
+    async def create_consumer_group(
+        self, stream_name: str, group_name: str, start_id: str = "0"
+    ) -> bool:
+        """
+        Create a consumer group on the specified stream if it doesn't already exist.
+        """
+        client = self.get_client()
+        try:
+            # MKSTREAM automatically creates the stream if not present
+            await client.xgroup_create(
+                name=stream_name, groupname=group_name, id=start_id, mkstream=True
+            )
+            logger.info(f"Created consumer group '{group_name}' on stream '{stream_name}'")
+            return True
+        except Exception as exc:
+            if "BUSYGROUP" in str(exc):
+                # Group already exists
+                return False
+            logger.warning(f"Error creating consumer group '{group_name}': {exc}")
+            raise
+
+    async def read_consumer_group(
+        self,
+        stream_name: str,
+        group_name: str,
+        consumer_name: str,
+        count: int = 10,
+        block_ms: int = 2000,
+    ) -> List[Any]:
+        """
+        Read new messages from a Redis Stream using XREADGROUP ('>' id).
+        """
+        client = self.get_client()
+        try:
+            streams_response = await client.xreadgroup(
+                groupname=group_name,
+                consumername=consumer_name,
+                streams={stream_name: ">"},
+                count=count,
+                block=block_ms,
+            )
+            # Response format: [[stream_name, [(message_id, fields), ...]]]
+            return streams_response or []
+        except Exception as exc:
+            logger.warning(f"Error reading consumer group '{group_name}': {exc}")
+            return []
+
+    async def ack_messages(
+        self, stream_name: str, group_name: str, *message_ids: str
+    ) -> int:
+        """
+        Acknowledge messages in consumer group (XACK).
+        """
+        if not message_ids:
+            return 0
+        client = self.get_client()
+        try:
+            return await client.xack(stream_name, group_name, *message_ids)
+        except Exception as exc:
+            logger.error(f"Failed to ACK messages {message_ids} in group '{group_name}': {exc}")
+            return 0
+
     async def get_stream_length(self, stream_name: str) -> int:
         """Return the current length (number of entries) in a Redis Stream."""
         client = self.get_client()

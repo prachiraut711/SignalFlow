@@ -33,9 +33,11 @@ class Settings(BaseSettings):
     # Message Broker / Stream Buffer (Redis)
     REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_STREAM_NAME: str = "signalflow:events"
+    REDIS_CONSUMER_GROUP: str = "signalflow-processors"
+    REDIS_CONSUMER_NAME: str = "worker-1"
     
-    # Columnar Analytical Store (DuckDB) - Placeholder for future phases
-    DUCKDB_PATH: str = "signalflow_analytics.duckdb"
+    # Columnar Analytical Store (DuckDB)
+    DUCKDB_PATH: str = "data/signalflow.duckdb"
     
     # AI / LLM Integration (Gemini) - Placeholder for future phases
     GEMINI_API_KEY: str | None = None

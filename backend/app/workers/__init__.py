@@ -1,5 +1,3 @@
-"""
-Background Workers Package
+from app.workers.event_worker import EventWorker
 
-Will contain Redis Stream consumer group workers and asynchronous task handlers.
-"""
+__all__ = ["EventWorker"]

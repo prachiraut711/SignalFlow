@@ -15,13 +15,34 @@ services:
       - ENVIRONMENT=development
       - DATABASE_URL=postgresql://signalflow:signalflow_dev@postgres:5432/signalflow_db
       - REDIS_URL=redis://redis:6379/0
+      - DUCKDB_PATH=/app/data/signalflow.duckdb
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     depends_on:
       - postgres
       - redis
     volumes:
       - ./backend:/app
+      - duckdb_data:/app/data
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ---------------------------------------------------------------------------
+  # Background Event Processing Worker (Redis Stream -> DuckDB)
+  # ---------------------------------------------------------------------------
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: signalflow-worker
+    environment:
+      - ENVIRONMENT=development
+      - REDIS_URL=redis://redis:6379/0
+      - DUCKDB_PATH=/app/data/signalflow.duckdb
+    depends_on:
+      - redis
+    volumes:
+      - ./backend:/app
+      - duckdb_data:/app/data
+    command: python -m app.workers.event_worker
 
   # ---------------------------------------------------------------------------
   # Frontend (React + Vite + TypeScript)
@@ -69,3 +90,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  duckdb_data:
