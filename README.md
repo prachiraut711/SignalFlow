@@ -95,9 +95,9 @@ Standard infrastructure monitoring (e.g., server CPU, memory, disk) often fails 
 | **Stream Consumers** | **Completed** | Resilient `EventWorker` daemon consuming consumer groups with XREADGROUP and XACK |
 | **DuckDB Analytics Store** | **Completed** | Embedded analytical event table with batch insertion and transactional querying |
 | **Analytics APIs** | **Completed** | Aggregation endpoints for `/api/analytics/overview`, `/api/analytics/services`, and 1-minute `/windows` |
+| **Database Connectors** | **Completed** | PostgreSQL relational storage via SQLAlchemy with automatic local SQLite fallback for dev |
+| **Anomaly Detection** | **Completed** | Dual-layer detection: Statistical (Z-score + % change) & ML (Isolation Forest) with deduplication |
 | **Frontend Starter** | **Completed** | React + TypeScript + Vite + Tailwind CSS SaaS starter layout with backend health monitoring |
-| **Database Connectors** | *Planned* | PostgreSQL relational storage for rules/audit metadata (Phase 4+) |
-| **Anomaly Detection** | *Planned* | Sliding-window Z-score & ML anomaly classification |
 | **Analytical Dashboard** | *Planned* | Real-time charts, event tables, and metric breakdowns |
 | **Gemini Diagnostics** | *Planned* | LLM-driven root-cause incident summaries |
 | **Event Simulator** | *Planned* | Realistic event generation script with injectable anomalies |
@@ -121,16 +121,16 @@ SignalFlow/
 ├── backend/                  # FastAPI Python backend application
 │   ├── app/
 │   │   ├── __init__.py
-│   │   ├── main.py          # FastAPI application & /health route
+│   │   ├── main.py          # FastAPI application & lifespan management
 │   │   ├── config.py        # Pydantic Settings configuration
-│   │   ├── api/             # API route controllers
-│   │   ├── db/              # Database connection placeholders (PG, Redis, DuckDB)
-│   │   ├── models/          # Data / ORM models (Planned)
-│   │   ├── schemas/         # Pydantic schemas (Request/Response)
-│   │   ├── services/        # Business logic services (Planned)
-│   │   ├── workers/         # Background stream workers (Planned)
-│   │   └── ml/              # Anomaly detection models (Planned)
-│   ├── tests/               # Backend pytest suite
+│   │   ├── api/             # API routes (health, events, analytics, anomalies)
+│   │   ├── db/              # Database connectors (PostgreSQL/SQLite, Redis, DuckDB)
+│   │   ├── models/          # SQLAlchemy models (AnomalyRecord)
+│   │   ├── schemas/         # Pydantic request/response validation schemas
+│   │   ├── services/        # Business logic (EventService, AnalyticsService, AnomalyService)
+│   │   ├── workers/         # Background stream consumers (EventWorker)
+│   │   └── ml/              # Statistical & Isolation Forest anomaly detectors
+│   ├── tests/               # Pytest suite (30 unit & integration tests)
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── docs/                     # Architecture & specifications
@@ -237,7 +237,36 @@ To start all baseline containers (Backend, Frontend, PostgreSQL, Redis):
 
 ---
 
-## 8. Running Tests
+## 8. Anomaly Detection Pipeline (Phase 4)
+
+SignalFlow incorporates a **dual-layer anomaly detection architecture** designed for high precision, low latency, and clear diagnostic explainability:
+
+### 1. Statistical Detector (`app/ml/statistical_detector.py`)
+- **Rolling Baseline Windows**: Evaluates 1-minute time windows against a dynamic historical baseline (up to 30 prior consecutive minutes).
+- **Z-Score & Percentage Change**: Computes standard deviation, Z-score, and relative percent deviations for `error_rate`, `average_latency_ms`, and `event_count`.
+- **Deterministic Severity Tiers**:
+  - `CRITICAL`: Error rate $\ge 15\%$ with $+200\%$ spike or $Z \ge 3.5$; latency $\ge 1800\text{ms}$ with $+200\%$ spike.
+  - `HIGH`: $Z \ge 2.5$ or percentage deviation $\ge 150\%$.
+  - `WARNING`: $Z \ge 2.0$ or percentage deviation $\ge 75\%$.
+  - `INFO`: Mild baseline fluctuation ($Z \ge 1.5$).
+- **Zero-Variance Resilience**: Safely handles static metrics without division-by-zero or math errors.
+
+### 2. Machine Learning Detector (`app/ml/anomaly_detector.py`)
+- **Isolation Forest**: Fits `scikit-learn` `IsolationForest` across multidimensional feature vectors:
+  $$[\text{event\_count}, \text{error\_rate}, \text{average\_latency\_ms}]$$
+- Detects non-linear, multivariate outliers where individual metrics may appear borderline but composite behavior is abnormal.
+
+### 3. Anomaly Orchestrator & Persistence (`app/services/anomaly_service.py`)
+- **Relational Storage**: Persists anomalies to PostgreSQL (or SQLite local fallback) with database-enforced unique constraints:
+  `UniqueConstraint("service", "time_window", "metric")`
+- **Deduplication**: Prevents alert fatigue by ensuring repeated detection triggers do not create duplicate records.
+- **REST Endpoints**:
+  - `GET /api/anomalies`: Query detected anomalies with filters (`service`, `severity`, `limit`).
+  - `POST /api/anomalies/detect`: Trigger an evaluation run across all services.
+
+---
+
+## 9. Running Tests
 
 ### Backend Tests
 From the `backend` directory (with active virtual environment):
@@ -247,7 +276,7 @@ pytest -v
 
 ---
 
-## 9. Design Philosophy
+## 10. Design Philosophy
 
 * **Medium Complexity & Interview-Focused**: Architected with enterprise best practices (type-safety, modular structure, asynchronous I/O, clean separation of concerns) without unnecessary complexity or tool sprawl (no Kafka/Kubernetes/Spark where lightweight alternatives like Redis Streams and DuckDB excel).
 * **Independent Execution**: Frontend and Backend are decoupled and can run or be tested entirely independently.

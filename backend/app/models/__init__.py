@@ -1,5 +1,3 @@
-"""
-Data Models Package (SQLAlchemy / Domain Models)
+from app.models.anomaly import Base, AnomalyRecord
 
-Will house future event, anomaly, alert, and configuration entity definitions.
-"""
+__all__ = ["Base", "AnomalyRecord"]

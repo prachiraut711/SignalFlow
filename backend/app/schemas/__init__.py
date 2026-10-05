@@ -5,6 +5,11 @@ from app.schemas.analytics import (
     ServiceMetricItem,
     TimeWindowMetricItem,
 )
+from app.schemas.anomaly import (
+    SeverityLevel,
+    AnomalyResponse,
+    DetectionRunResponse,
+)
 
 __all__ = [
     "HealthResponse",
@@ -15,4 +20,7 @@ __all__ = [
     "AnalyticsOverviewResponse",
     "ServiceMetricItem",
     "TimeWindowMetricItem",
+    "SeverityLevel",
+    "AnomalyResponse",
+    "DetectionRunResponse",
 ]

@@ -10,7 +10,9 @@ from app.config import get_settings
 from app.api.health import router as health_router
 from app.api.events import router as events_router
 from app.api.analytics import router as analytics_router
+from app.api.anomalies import router as anomalies_router
 from app.services.redis_service import get_redis_service
+from app.db.postgres import init_db
 
 settings = get_settings()
 
@@ -18,6 +20,8 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application startup and shutdown lifecycle."""
+    # Attempt to initialize relational schema (anomalies table)
+    init_db()
     yield
     # Graceful shutdown of Redis client pool
     redis_service = get_redis_service()
@@ -52,6 +56,8 @@ async def root():
         "health": "/health",
         "redis_health": "/health/redis",
         "events_api": "/api/events",
+        "analytics_api": "/api/analytics/overview",
+        "anomalies_api": "/api/anomalies",
         "status": "operational",
     }
 
@@ -67,3 +73,7 @@ app.include_router(events_router, prefix="/api/v1")
 # Mount Analytics query router under /api as well as /api/v1
 app.include_router(analytics_router, prefix="/api")
 app.include_router(analytics_router, prefix="/api/v1")
+
+# Mount Anomalies router under /api as well as /api/v1
+app.include_router(anomalies_router, prefix="/api")
+app.include_router(anomalies_router, prefix="/api/v1")
