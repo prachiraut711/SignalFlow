@@ -180,3 +180,40 @@ def test_redis_health_unhealthy():
         assert data["service"] == "redis"
     finally:
         app.dependency_overrides.clear()
+
+
+def test_api_get_events():
+    """Verify GET /api/events queries DuckDB and returns event list."""
+    from app.db.duckdb import DuckDBService, get_duckdb_service
+    duckdb_svc = DuckDBService(db_path=":memory:")
+    duckdb_svc.insert_events_batch([{
+        "event_id": "evt_test_101",
+        "timestamp": "2026-10-05T14:30:00Z",
+        "service": "payment-service",
+        "event_type": "payment_success",
+        "region": "Pune",
+        "status_code": 200,
+        "latency_ms": 350.0,
+        "value": 1500.0,
+        "user_id": "user_abc",
+        "ingested_at": "2026-10-05T14:30:01Z",
+    }])
+
+    app.dependency_overrides[get_duckdb_service] = lambda: duckdb_svc
+    try:
+        response = client.get("/api/events")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["event_id"] == "evt_test_101"
+        assert data[0]["service"] == "payment-service"
+        assert data[0]["region"] == "Pune"
+        assert data[0]["status_code"] == 200
+
+        # Filter test
+        res_filter = client.get("/api/events?service=other-service")
+        assert res_filter.status_code == 200
+        assert len(res_filter.json()) == 0
+    finally:
+        app.dependency_overrides.clear()
+

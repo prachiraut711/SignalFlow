@@ -1,5 +1,5 @@
 from app.schemas.health import HealthResponse
-from app.schemas.event import EventType, EventCreate, EventRecord, EventResponse
+from app.schemas.event import EventType, EventCreate, EventRecord, EventResponse, EventItem
 from app.schemas.analytics import (
     AnalyticsOverviewResponse,
     ServiceMetricItem,
@@ -25,6 +25,7 @@ __all__ = [
     "EventCreate",
     "EventRecord",
     "EventResponse",
+    "EventItem",
     "AnalyticsOverviewResponse",
     "ServiceMetricItem",
     "TimeWindowMetricItem",

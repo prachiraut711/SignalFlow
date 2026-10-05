@@ -97,3 +97,19 @@ class EventResponse(BaseModel):
     success: bool = True
     message: str = "Event accepted"
     event_id: str
+
+
+class EventItem(BaseModel):
+    """
+    Normalized event item schema returned by GET /api/events for exploration.
+    """
+    event_id: str
+    timestamp: datetime
+    service: str
+    event_type: str
+    region: str
+    status_code: int
+    latency_ms: float
+    value: Optional[float] = 0.0
+    user_id: Optional[str] = None
+    ingested_at: datetime

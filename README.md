@@ -99,8 +99,7 @@ Standard infrastructure monitoring (e.g., server CPU, memory, disk) often fails 
 | **Anomaly Detection** | **Completed** | Dual-layer detection: Statistical (Z-score + % change) & ML (Isolation Forest) with deduplication |
 | **Signal Correlation** | **Completed** | Correlates related anomalies into incident signals (`OPEN`/`RESOLVED`) with 10-min windowing |
 | **AI Incident Explanation** | **Completed** | OpenRouter LLM diagnostic summaries, hypotheses, and recommended remediation steps |
-| **Frontend Starter** | **Completed** | React + TypeScript + Vite + Tailwind CSS SaaS starter layout with backend health monitoring |
-| **Analytical Dashboard** | *Planned* | Real-time charts, event tables, and metric breakdowns |
+| **Frontend SaaS Dashboard** | **Completed** | React + TypeScript + Vite + Tailwind + Recharts monitoring dashboard with incident triage & AI insights |
 | **Event Simulator** | *Planned* | Realistic event generation script with injectable anomalies |
 
 
@@ -110,11 +109,15 @@ Standard infrastructure monitoring (e.g., server CPU, memory, disk) often fails 
 
 ```text
 SignalFlow/
-├── frontend/                 # React + TypeScript + Vite web client
+├── frontend/                 # React + TypeScript + Vite SaaS client
 │   ├── src/
-│   │   ├── App.tsx          # Starter page with health status & architecture
+│   │   ├── components/      # UI components (Header, Sidebar, Badges, Charts, StatCard, etc.)
+│   │   ├── pages/           # Pages (Dashboard, Signals, SignalDetail, Events, Services)
+│   │   ├── lib/             # API client & TypeScript interfaces (api.ts)
+│   │   ├── App.tsx          # Router layout & navigation configuration
 │   │   ├── main.tsx         # React root entrypoint
-│   │   └── index.css        # Tailwind styling
+│   │   ├── index.css        # Tailwind CSS imports & styling
+│   │   └── vite-env.d.ts    # Vite environment type definitions
 │   ├── package.json
 │   ├── tailwind.config.js
 │   ├── vite.config.ts
@@ -320,7 +323,36 @@ Summary + Likely Causes + Recommended Actions
 
 ---
 
-## 11. Running Tests
+## 11. Frontend SaaS Dashboard (Phase 7)
+
+SignalFlow features a responsive, dark-first SaaS monitoring dashboard built with **React 18**, **TypeScript**, **Vite**, **Tailwind CSS**, and **Recharts**. The frontend connects directly to the FastAPI backend with live telemetry and automatic polling:
+
+### Views & Capabilities:
+1. **Overview Dashboard (`/`)**:
+   - Executive telemetry stat cards (Total Events, Error Rate, Average Latency, Active Incidents, Total Anomalies, Correlated Signals).
+   - Real-time **Event Throughput AreaChart** with gradient fill.
+   - Stacked **Success vs. Error Count BarChart**.
+   - **Service Health Matrix** classifying service tiers (Healthy $\le 3\%$, Degraded $3-10\%$, Critical $> 10\%$).
+   - Quick-action table of high-priority operational signals.
+
+2. **Incident Signals (`/signals`)**:
+   - Filterable signals list by Severity (`INFO`, `WARNING`, `HIGH`, `CRITICAL`), Status (`OPEN`, `RESOLVED`), Service, and Region.
+   - On-demand **Trigger Correlation Scan** button to group recent anomalies into operational signals.
+
+3. **Signal Investigation Detail (`/signals/:id`)**:
+   - Correlated anomaly inspection with individual baseline comparisons, percentage changes, Z-scores, and diagnostic reasons.
+   - On-demand **AI Incident Explanation** powered by OpenRouter (summary, likely root causes, recommended action checklist).
+   - Incident lifecycle actions (Mark as `RESOLVED`).
+
+4. **Event Explorer (`/events`)**:
+   - Raw analytical event stream loaded directly from DuckDB with server-side filtering (`service`, `event_type`, `region`, `status_code`) and pagination.
+
+5. **Service Directory (`/services`)**:
+   - Per-service health cards displaying total events, error counts, failure rate, and mean response latency.
+
+---
+
+## 12. Running Tests & Verification
 
 ### Backend Tests
 From the `backend` directory (with active virtual environment):
@@ -328,10 +360,17 @@ From the `backend` directory (with active virtual environment):
 pytest -v
 ```
 
+### Frontend Type-Check & Build
+From the `frontend` directory:
+```bash
+npm run build
+```
+
 ---
 
-## 12. Design Philosophy
+## 13. Design Philosophy
 
 * **Medium Complexity & Interview-Focused**: Architected with enterprise best practices (type-safety, modular structure, asynchronous I/O, clean separation of concerns) without unnecessary complexity or tool sprawl (no Kafka/Kubernetes/Spark where lightweight alternatives like Redis Streams and DuckDB excel).
 * **Independent Execution**: Frontend and Backend are decoupled and can run or be tested entirely independently.
 * **Observability-First**: Built from day one with system health tracking and structured telemetry schemas.
+
