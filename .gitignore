@@ -1,0 +1,83 @@
+# Byte-compiled / optimized / Pylocale files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+
+# Node.js / Frontend
+node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.cache/
+*.tsbuildinfo
+.npm
+.yarn/
+*.log
+
+# Environment variables & secrets (NEVER commit secrets!)
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Database files
+*.sqlite3
+*.db
+*.duckdb
+*.duckdb.wal
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Docker volume data
+data/
+postgres_data/
+redis_data/

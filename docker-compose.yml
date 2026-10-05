@@ -1,0 +1,71 @@
+version: "3.8"
+
+services:
+  # ---------------------------------------------------------------------------
+  # Backend API (FastAPI)
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: signalflow-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql://signalflow:signalflow_dev@postgres:5432/signalflow_db
+      - REDIS_URL=redis://redis:6379/0
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ---------------------------------------------------------------------------
+  # Frontend (React + Vite + TypeScript)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: signalflow-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0
+
+  # ---------------------------------------------------------------------------
+  # Primary Relational Database (PostgreSQL)
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: signalflow-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: signalflow
+      POSTGRES_PASSWORD: signalflow_dev
+      POSTGRES_DB: signalflow_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # ---------------------------------------------------------------------------
+  # Message Broker & Stream Buffer (Redis)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: signalflow-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
