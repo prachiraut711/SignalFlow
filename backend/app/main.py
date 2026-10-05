@@ -12,6 +12,7 @@ from app.api.events import router as events_router
 from app.api.analytics import router as analytics_router
 from app.api.anomalies import router as anomalies_router
 from app.api.signals import router as signals_router
+from app.api.ai import router as ai_router
 from app.services.redis_service import get_redis_service
 from app.db.postgres import init_db
 
@@ -83,3 +84,7 @@ app.include_router(anomalies_router, prefix="/api/v1")
 # Mount Signals router under /api as well as /api/v1
 app.include_router(signals_router, prefix="/api")
 app.include_router(signals_router, prefix="/api/v1")
+
+# Mount AI Explanation router under /api as well as /api/v1
+app.include_router(ai_router, prefix="/api")
+app.include_router(ai_router, prefix="/api/v1")

@@ -17,6 +17,7 @@ from app.schemas.signal import (
     SignalDetailResponse,
     SignalCorrelationResponse,
 )
+from app.schemas.ai_explanation import AIExplanationResponse
 
 __all__ = [
     "HealthResponse",
@@ -35,4 +36,5 @@ __all__ = [
     "SignalResponse",
     "SignalDetailResponse",
     "SignalCorrelationResponse",
+    "AIExplanationResponse",
 ]

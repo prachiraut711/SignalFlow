@@ -98,9 +98,9 @@ Standard infrastructure monitoring (e.g., server CPU, memory, disk) often fails 
 | **Database Connectors** | **Completed** | PostgreSQL relational storage via SQLAlchemy with automatic local SQLite fallback for dev |
 | **Anomaly Detection** | **Completed** | Dual-layer detection: Statistical (Z-score + % change) & ML (Isolation Forest) with deduplication |
 | **Signal Correlation** | **Completed** | Correlates related anomalies into incident signals (`OPEN`/`RESOLVED`) with 10-min windowing |
+| **AI Incident Explanation** | **Completed** | OpenRouter LLM diagnostic summaries, hypotheses, and recommended remediation steps |
 | **Frontend Starter** | **Completed** | React + TypeScript + Vite + Tailwind CSS SaaS starter layout with backend health monitoring |
 | **Analytical Dashboard** | *Planned* | Real-time charts, event tables, and metric breakdowns |
-| **Gemini Diagnostics** | *Planned* | LLM-driven root-cause incident summaries |
 | **Event Simulator** | *Planned* | Realistic event generation script with injectable anomalies |
 
 
@@ -123,16 +123,17 @@ SignalFlow/
 │   ├── app/
 │   │   ├── __init__.py
 │   │   ├── main.py          # FastAPI application & lifespan management
-│   │   ├── config.py        # Pydantic Settings configuration
-│   │   ├── api/             # API routes (health, events, analytics, anomalies, signals)
+│   │   ├── config.py        # Pydantic Settings configuration (Redis, PG, OpenRouter)
+│   │   ├── api/             # API routes (health, events, analytics, anomalies, signals, ai)
 │   │   ├── db/              # Database connectors (PostgreSQL/SQLite, Redis, DuckDB)
 │   │   ├── models/          # SQLAlchemy models (AnomalyRecord, SignalRecord, SignalAnomaly)
-│   │   ├── schemas/         # Pydantic request/response validation schemas
-│   │   ├── services/        # Business logic (Event, Analytics, Anomaly, Signal)
+│   │   ├── schemas/         # Pydantic validation schemas (Events, Anomalies, Signals, AI)
+│   │   ├── services/        # Business logic (Event, Analytics, Anomaly, Signal, AI Explanation)
 │   │   ├── workers/         # Background stream consumers (EventWorker)
 │   │   └── ml/              # Statistical & Isolation Forest anomaly detectors
-│   ├── tests/               # Pytest suite (44 unit & integration tests)
+│   ├── tests/               # Pytest suite (55 unit & integration tests)
 │   ├── requirements.txt
+│   ├── .env.example         # Backend environment variables template
 │   └── Dockerfile
 ├── docs/                     # Architecture & specifications
 │   └── architecture.md
@@ -295,7 +296,31 @@ Payment Service Degradation (CRITICAL, OPEN)
 
 ---
 
-## 10. Running Tests
+## 10. AI Incident Explanation (Phase 6)
+
+SignalFlow integrates **OpenRouter** (OpenAI-compatible HTTP chat completions) to transform structured incident telemetry into concise, human-readable operational diagnostics.
+
+```text
+Signal
+  ↓
+Structured incident context
+  ↓
+OpenRouter LLM (e.g. openrouter/free)
+  ↓
+Summary + Likely Causes + Recommended Actions
+```
+
+> [!NOTE]
+> The LLM functions strictly as an **explanation layer**. It does not perform anomaly detection, signal correlation, database queries, or autonomous operations. Detection and correlation remain 100% deterministic within SignalFlow's statistical and ML engines.
+
+- **Non-blocking Configuration**: Runs gracefully with or without `OPENROUTER_API_KEY`. If unconfigured, the endpoint returns a clean `503 Service Unavailable` error without crashing.
+- **Controlled Prompting**: Distinguishes verified observations from possible hypotheses (hypotheses are never stated as confirmed facts).
+- **REST Endpoint**:
+  - `POST /api/signals/{signal_id}/explain`: Generates fresh on-demand operational guidance for an incident signal.
+
+---
+
+## 11. Running Tests
 
 ### Backend Tests
 From the `backend` directory (with active virtual environment):
@@ -305,7 +330,7 @@ pytest -v
 
 ---
 
-## 11. Design Philosophy
+## 12. Design Philosophy
 
 * **Medium Complexity & Interview-Focused**: Architected with enterprise best practices (type-safety, modular structure, asynchronous I/O, clean separation of concerns) without unnecessary complexity or tool sprawl (no Kafka/Kubernetes/Spark where lightweight alternatives like Redis Streams and DuckDB excel).
 * **Independent Execution**: Frontend and Backend are decoupled and can run or be tested entirely independently.
