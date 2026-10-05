@@ -2,14 +2,26 @@
 SignalFlow FastAPI Application Entrypoint
 """
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.schemas.health import HealthResponse
-from app.api import api_router
+from app.api.health import router as health_router
+from app.api.events import router as events_router
+from app.services.redis_service import get_redis_service
 
 settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application startup and shutdown lifecycle."""
+    yield
+    # Graceful shutdown of Redis client pool
+    redis_service = get_redis_service()
+    await redis_service.close()
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -17,6 +29,7 @@ app = FastAPI(
     description="Business Event Intelligence & Anomaly Detection Platform",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # Configure CORS for frontend access
@@ -36,21 +49,16 @@ async def root():
         "message": "Welcome to SignalFlow API",
         "docs": "/docs",
         "health": "/health",
+        "redis_health": "/health/redis",
+        "events_api": "/api/events",
         "status": "operational",
     }
 
 
-@app.get("/health", tags=["Health"], response_model=HealthResponse)
-async def health() -> HealthResponse:
-    """
-    Standard health check endpoint.
-    Returns status and service identification.
-    """
-    return HealthResponse(
-        status="healthy",
-        service="signalflow-backend"
-    )
+# Health check endpoints (/health and /health/redis)
+app.include_router(health_router)
+app.include_router(health_router, prefix="/api/v1")
 
-
-# Mount versioned API routes for future endpoints (e.g. /api/v1)
-app.include_router(api_router, prefix="/api/v1")
+# Mount Event Ingestion router under /api as well as /api/v1
+app.include_router(events_router, prefix="/api")
+app.include_router(events_router, prefix="/api/v1")

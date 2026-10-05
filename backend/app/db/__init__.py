@@ -23,11 +23,10 @@ async def get_db_session() -> AsyncGenerator[Any, None]:
 
 async def get_redis_client() -> Any:
     """
-    Placeholder for Redis client connection.
-    Will provide connection pool to Redis Streams in Phase 2+.
+    Return active async Redis client from RedisService.
     """
-    # TODO: Initialize redis.asyncio client in Phase 2
-    return None
+    from app.services.redis_service import get_redis_service
+    return get_redis_service().get_client()
 
 
 def get_duckdb_connection() -> Any:

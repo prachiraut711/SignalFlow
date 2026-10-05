@@ -89,11 +89,12 @@ Standard infrastructure monitoring (e.g., server CPU, memory, disk) often fails 
 | Component | Status | Details |
 | :--- | :--- | :--- |
 | **Project Foundation** | **Completed** | Clean full-stack folder structure, configuration, environment templates, and Docker Compose |
-| **Backend Core** | **Completed** | FastAPI service initialized, configuration loading via Pydantic, `GET /health` operational |
+| **Backend Core** | **Completed** | FastAPI service initialized, configuration loading via Pydantic, `GET /health` and `GET /health/redis` operational |
+| **Event Ingestion API** | **Completed** | Validated ingestion endpoint (`POST /api/events`) with server-side unique ID generation |
+| **Redis Stream Pipeline** | **Completed** | Buffering validated events in real-time to `signalflow:events` with XADD |
 | **Frontend Starter** | **Completed** | React + TypeScript + Vite + Tailwind CSS SaaS starter layout with backend health monitoring |
-| **Database Connectors** | *Planned* | PostgreSQL, Redis Streams, and DuckDB connection lifecycles prepared in Phase 1 |
-| **Event Ingestion API** | *Planned* | Validated endpoints for ingestion (`POST /events`) |
-| **Redis Stream Pipeline** | *Planned* | Ingestion buffer and consumer group workers |
+| **Database Connectors** | *Planned* | PostgreSQL and DuckDB connection lifecycles (Phase 3+) |
+| **Stream Consumers** | *Planned* | Background consumer group workers for stream processing (Phase 3) |
 | **Anomaly Detection** | *Planned* | Sliding-window Z-score & ML anomaly classification |
 | **Analytical Dashboard** | *Planned* | Real-time charts, event tables, and metric breakdowns |
 | **Gemini Diagnostics** | *Planned* | LLM-driven root-cause incident summaries |

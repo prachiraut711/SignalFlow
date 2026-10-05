@@ -1,5 +1,9 @@
-"""
-Business Logic & Domain Services Package
+from app.services.redis_service import RedisService, get_redis_service
+from app.services.event_service import EventService, get_event_service
 
-Will contain event validation, processing, and query services.
-"""
+__all__ = [
+    "RedisService",
+    "get_redis_service",
+    "EventService",
+    "get_event_service",
+]

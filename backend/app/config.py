@@ -30,8 +30,9 @@ class Settings(BaseSettings):
     # Relational Database (PostgreSQL) - Placeholder for future phases
     DATABASE_URL: str = "postgresql://signalflow:signalflow_dev@localhost:5432/signalflow_db"
     
-    # Message Broker / Stream Buffer (Redis) - Placeholder for future phases
+    # Message Broker / Stream Buffer (Redis)
     REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_STREAM_NAME: str = "signalflow:events"
     
     # Columnar Analytical Store (DuckDB) - Placeholder for future phases
     DUCKDB_PATH: str = "signalflow_analytics.duckdb"
