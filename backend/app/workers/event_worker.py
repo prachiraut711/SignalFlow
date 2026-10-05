@@ -52,7 +52,7 @@ class EventWorker:
 
     async def initialize_consumer_group(self) -> None:
         """Ensure stream and consumer group exist in Redis."""
-        while self.is_running:
+        while True:
             try:
                 await self.redis_service.create_consumer_group(
                     stream_name=self.stream_name,
@@ -64,6 +64,11 @@ class EventWorker:
                 )
                 break
             except Exception as exc:
+                if not self.is_running:
+                    logger.warning(
+                        f"Could not create consumer group '{self.group_name}': {exc}"
+                    )
+                    break
                 logger.warning(
                     f"Waiting for Redis connection to create consumer group: {exc}. Retrying in 2s..."
                 )

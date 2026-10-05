@@ -6,6 +6,7 @@ import { Signals } from './pages/Signals';
 import { SignalDetail } from './pages/SignalDetail';
 import { Events } from './pages/Events';
 import { Services } from './pages/Services';
+import { Simulator } from './pages/Simulator';
 
 const App: React.FC = () => {
   return (
@@ -16,6 +17,7 @@ const App: React.FC = () => {
         <Route path="signals/:id" element={<SignalDetail />} />
         <Route path="events" element={<Events />} />
         <Route path="services" element={<Services />} />
+        <Route path="simulator" element={<Simulator />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

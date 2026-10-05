@@ -18,6 +18,11 @@ from app.schemas.signal import (
     SignalCorrelationResponse,
 )
 from app.schemas.ai_explanation import AIExplanationResponse
+from app.schemas.simulator import (
+    SimulationScenario,
+    SimulatorStartRequest,
+    SimulatorStatusResponse,
+)
 
 __all__ = [
     "HealthResponse",
@@ -38,4 +43,7 @@ __all__ = [
     "SignalDetailResponse",
     "SignalCorrelationResponse",
     "AIExplanationResponse",
+    "SimulationScenario",
+    "SimulatorStartRequest",
+    "SimulatorStatusResponse",
 ]

@@ -100,7 +100,7 @@ Standard infrastructure monitoring (e.g., server CPU, memory, disk) often fails 
 | **Signal Correlation** | **Completed** | Correlates related anomalies into incident signals (`OPEN`/`RESOLVED`) with 10-min windowing |
 | **AI Incident Explanation** | **Completed** | OpenRouter LLM diagnostic summaries, hypotheses, and recommended remediation steps |
 | **Frontend SaaS Dashboard** | **Completed** | React + TypeScript + Vite + Tailwind + Recharts monitoring dashboard with incident triage & AI insights |
-| **Event Simulator** | *Planned* | Realistic event generation script with injectable anomalies |
+| **Event Simulator** | **Completed** | Realistic multi-scenario event simulation engine sending live telemetry through `POST /api/events` |
 
 
 ---
@@ -112,7 +112,7 @@ SignalFlow/
 ├── frontend/                 # React + TypeScript + Vite SaaS client
 │   ├── src/
 │   │   ├── components/      # UI components (Header, Sidebar, Badges, Charts, StatCard, etc.)
-│   │   ├── pages/           # Pages (Dashboard, Signals, SignalDetail, Events, Services)
+│   │   ├── pages/           # Pages (Dashboard, Signals, SignalDetail, Events, Services, Simulator)
 │   │   ├── lib/             # API client & TypeScript interfaces (api.ts)
 │   │   ├── App.tsx          # Router layout & navigation configuration
 │   │   ├── main.tsx         # React root entrypoint
@@ -127,14 +127,15 @@ SignalFlow/
 │   │   ├── __init__.py
 │   │   ├── main.py          # FastAPI application & lifespan management
 │   │   ├── config.py        # Pydantic Settings configuration (Redis, PG, OpenRouter)
-│   │   ├── api/             # API routes (health, events, analytics, anomalies, signals, ai)
+│   │   ├── api/             # API routes (health, events, analytics, anomalies, signals, ai, simulator)
 │   │   ├── db/              # Database connectors (PostgreSQL/SQLite, Redis, DuckDB)
 │   │   ├── models/          # SQLAlchemy models (AnomalyRecord, SignalRecord, SignalAnomaly)
-│   │   ├── schemas/         # Pydantic validation schemas (Events, Anomalies, Signals, AI)
+│   │   ├── schemas/         # Pydantic validation schemas (Events, Anomalies, Signals, AI, Simulator)
 │   │   ├── services/        # Business logic (Event, Analytics, Anomaly, Signal, AI Explanation)
 │   │   ├── workers/         # Background stream consumers (EventWorker)
-│   │   └── ml/              # Statistical & Isolation Forest anomaly detectors
-│   ├── tests/               # Pytest suite (55 unit & integration tests)
+│   │   ├── ml/              # Statistical & Isolation Forest anomaly detectors
+│   │   └── simulator/       # Event Simulator (scenarios, generator, service)
+│   ├── tests/               # Pytest suite (65 unit & functional tests)
 │   ├── requirements.txt
 │   ├── .env.example         # Backend environment variables template
 │   └── Dockerfile
@@ -350,9 +351,68 @@ SignalFlow features a responsive, dark-first SaaS monitoring dashboard built wit
 5. **Service Directory (`/services`)**:
    - Per-service health cards displaying total events, error counts, failure rate, and mean response latency.
 
+6. **Event Simulator (`/simulator`)**:
+   - Dedicated interactive control console for launching and managing realistic event simulation scenarios.
+
 ---
 
-## 12. Running Tests & Verification
+## 12. Event Simulator (Phase 8)
+
+SignalFlow features a realistic **Event Simulation Engine** that models distributed system behaviors and failure modes. Crucially, the simulator does not inject synthetic records directly into the databases or frontend state; it dispatches valid application events through the real production ingestion route:
+
+```text
+Event Simulator
+      ↓
+POST /api/events
+      ↓
+FastAPI Ingestion
+      ↓
+Redis Stream (signalflow:events)
+      ↓
+Processing Worker (EventWorker)
+      ↓
+DuckDB Analytical Store
+      ↓
+Dual-Layer Anomaly Detection
+      ↓
+Signal Correlation
+      ↓
+SaaS Dashboard
+```
+
+### Supported Failure Scenarios:
+1. **Normal Traffic**: Baseline healthy application traffic across all services with low error rate ($< 2\%$) and nominal response latency ($120-420\text{ms}$).
+2. **Payment Failure Spike**: Healthy baseline transitioning into an abrupt surge in transaction failures ($30\%$ error rate) and high latency ($2-3\text{s}$) on `payment-service`.
+3. **API Error Spike**: Sudden elevated HTTP 500/502/503 server errors on `order-service` ($35\%$ failure rate).
+4. **High Latency Degradation**: Successful operations (predominantly HTTP 200) that degrade significantly into extreme response times ($2-4\text{s}$).
+5. **Traffic Surge**: Sudden throughput volume spike ($3\text{x}-4\text{x}$ traffic) while preserving low error rates, exercising volume anomaly detection.
+6. **Regional Failure (Pune Outage)**: Multi-region traffic where the Pune datacenter suffers elevated errors and latency while other geographic regions remain healthy.
+
+### Example Incident Progression:
+```text
+Payment Failure Spike
+        ↓
+payment_failed events increase
+        ↓
+error rate increases
+        ↓
+latency increases
+        ↓
+anomaly detected (Statistical + Isolation Forest)
+        ↓
+signal created ("Payment Service Degradation")
+        ↓
+AI explanation available (OpenRouter LLM)
+```
+
+### Safe Simulation Limits:
+- **Events per second**: $1$ to $50\text{ eps}$ (rejects values outside this range).
+- **Duration**: $5$ to $300\text{ seconds}$ (rejects values outside this range).
+- **Execution Concurrency**: Singleton enforcement (only one active simulation allowed at a time).
+
+---
+
+## 13. Running Tests & Verification
 
 ### Backend Tests
 From the `backend` directory (with active virtual environment):
@@ -368,9 +428,10 @@ npm run build
 
 ---
 
-## 13. Design Philosophy
+## 14. Design Philosophy
 
 * **Medium Complexity & Interview-Focused**: Architected with enterprise best practices (type-safety, modular structure, asynchronous I/O, clean separation of concerns) without unnecessary complexity or tool sprawl (no Kafka/Kubernetes/Spark where lightweight alternatives like Redis Streams and DuckDB excel).
 * **Independent Execution**: Frontend and Backend are decoupled and can run or be tested entirely independently.
 * **Observability-First**: Built from day one with system health tracking and structured telemetry schemas.
+
 

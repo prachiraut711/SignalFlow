@@ -33,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { to: '/signals', label: 'Signals', icon: AlertOctagon },
     { to: '/events', label: 'Event Explorer', icon: Activity },
     { to: '/services', label: 'Service Explorer', icon: Server },
+    { to: '/simulator', label: 'Simulator', icon: Cpu },
   ];
 
   const sidebarContent = (

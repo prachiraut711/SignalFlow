@@ -15,6 +15,7 @@ import {
   ServiceMetric,
   TimeWindowMetric,
   Signal,
+  SimulatorStatusResponse,
 } from '../lib/api';
 import { StatCard } from '../components/StatCard';
 import { SeverityBadge } from '../components/SeverityBadge';
@@ -32,25 +33,28 @@ export const Dashboard: React.FC = () => {
   const [services, setServices] = useState<ServiceMetric[]>([]);
   const [windows, setWindows] = useState<TimeWindowMetric[]>([]);
   const [signals, setSignals] = useState<Signal[]>([]);
+  const [simStatus, setSimStatus] = useState<SimulatorStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadDashboardData = useCallback(async () => {
     try {
       setError(null);
-      const [ov, srv, win, sig] = await Promise.all([
+      const [ov, srv, win, sig, sim] = await Promise.all([
         api.getOverview(),
         api.getServiceMetrics(),
         api.getTimeWindows(1),
         api.getSignals({ limit: 10 }),
+        api.getSimulatorStatus().catch(() => null),
       ]);
       setOverview(ov);
       setServices(srv);
       setWindows(win);
       setSignals(sig);
-    } catch (err: any) {
+      if (sim) setSimStatus(sim);
+    } catch (err: unknown) {
       console.error('Failed to load dashboard data:', err);
-      setError(err?.message || 'Unable to connect to SignalFlow backend API.');
+      setError(err instanceof Error ? err.message : 'Unable to connect to SignalFlow backend API.');
     } finally {
       setLoading(false);
     }
@@ -84,6 +88,35 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Simulation Activity Indicator */}
+      {simStatus?.running && (
+        <div
+          onClick={() => navigate('/simulator')}
+          className="cursor-pointer p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-between text-xs text-indigo-200 hover:bg-indigo-500/15 transition-all shadow-lg shadow-indigo-500/5"
+        >
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <div>
+              <span className="font-bold text-white uppercase tracking-wider text-[10px] mr-1.5 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                Simulation Running
+              </span>
+              <span className="text-slate-200 font-medium">
+                {simStatus.scenario?.replace(/_/g, ' ')}
+              </span>{' '}
+              —{' '}
+              <span className="font-mono font-bold text-white">{simStatus.events_generated}</span>{' '}
+              events generated ({simStatus.elapsed_seconds}s / {simStatus.duration_seconds}s)
+            </div>
+          </div>
+          <div className="flex items-center gap-1 text-indigo-400 font-medium hover:text-indigo-300">
+            Control Simulator <ArrowRight className="w-3.5 h-3.5" />
+          </div>
+        </div>
+      )}
+
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <StatCard
