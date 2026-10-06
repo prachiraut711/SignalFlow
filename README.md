@@ -2,6 +2,13 @@
 
 SignalFlow is a business event intelligence and anomaly detection platform that ingests application events, detects unusual behavior, correlates related anomalies into incidents, and provides AI-assisted operational explanations.
 
+## Live Demo
+
+* Frontend: https://signalflow-frontend.onrender.com/
+* Backend API Docs: https://signalflow-backend-df3p.onrender.com/docs
+
+> Note: The backend is hosted on Render's free tier, so the first request after inactivity may take some time while the service wakes up.
+
 ![Platform Overview](docs/screenshots/platform%20overview.png)
 
 ## Problem
