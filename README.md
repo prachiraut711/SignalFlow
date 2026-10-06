@@ -412,19 +412,51 @@ AI explanation available (OpenRouter LLM)
 
 ---
 
-## 13. Running Tests & Verification
+## 13. Testing & CI/CD
 
 ### Backend Tests
 From the `backend` directory (with active virtual environment):
 ```bash
-pytest -v
+cd backend
+pytest -q
 ```
+Runs 70 automated unit and functional tests covering health, event ingestion, Redis Streams, analytical rollups, statistical & Isolation Forest anomaly detection, signal correlation, OpenRouter AI incident explanations (mocked), simulator lifecycle, and end-to-end pipeline smoke test. Tests run with 100% isolation with zero dependencies on live external databases or cloud API keys.
 
 ### Frontend Type-Check & Build
 From the `frontend` directory:
 ```bash
+cd frontend
 npm run build
 ```
+Executes TypeScript compilation (`tsc -b`) followed by Vite production bundling to verify all routes (`/`, `/signals`, `/signals/:id`, `/events`, `/services`, `/simulator`) and components type-check and build with zero errors.
+
+### Automated End-to-End Smoke Test
+Run the end-to-end smoke check script across all 8 pipeline stages:
+```bash
+python tests/smoke_test.py
+# Or against a running server:
+python tests/smoke_test.py --url http://localhost:8000
+```
+
+### Docker Verification
+To verify and start the entire multi-container architecture locally:
+```bash
+docker compose build
+docker compose up -d
+docker compose ps
+```
+Containers started:
+- `signalflow-frontend` (Port 5173 -> proxies to `http://backend:8000`)
+- `signalflow-backend` (Port 8000)
+- `signalflow-worker` (Background stream consumer daemon)
+- `signalflow-postgres` (Port 5432)
+- `signalflow-redis` (Port 6379)
+
+### Continuous Integration (GitHub Actions)
+The repository includes automated CI in [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+- **Backend Job**: Sets up Python 3.12, installs dependencies, and runs `pytest -q backend/tests` in an isolated environment (using in-memory DuckDB and SQLite, FakeRedis, and mocked AI responses).
+- **Frontend Job**: Sets up Node.js 22, executes `npm ci`, and runs `npm run build` (`tsc -b && vite build`).
+- **Security & Reliability**: Strictly zero real secrets or API keys are required or committed in the CI workflow.
 
 ---
 

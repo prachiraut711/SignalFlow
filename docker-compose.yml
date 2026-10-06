@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # ---------------------------------------------------------------------------
   # Backend API (FastAPI)
@@ -16,7 +14,7 @@ services:
       - DATABASE_URL=postgresql://signalflow:signalflow_dev@postgres:5432/signalflow_db
       - REDIS_URL=redis://redis:6379/0
       - DUCKDB_PATH=/app/data/signalflow.duckdb
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
     depends_on:
       - postgres
       - redis
@@ -55,7 +53,7 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_BACKEND_URL=http://backend:8000
     volumes:
       - ./frontend:/app
       - /app/node_modules

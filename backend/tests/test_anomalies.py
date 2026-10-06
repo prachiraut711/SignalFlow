@@ -57,6 +57,27 @@ def test_statistical_extreme_deviation():
     assert "Critical error surge" in result["reason"]
 
 
+def test_statistical_latency_spike():
+    """Verify latency degradation beyond threshold is detected as anomaly."""
+    baseline = [320.0, 310.0, 330.0, 305.0, 315.0]
+    result = detect_statistical_anomaly("average_latency_ms", current_value=1950.0, baseline_values=baseline)
+    assert result is not None
+    assert result["is_anomaly"] is True
+    assert result["anomaly_type"] == "latency_spike"
+    assert result["severity"] in ("HIGH", "CRITICAL")
+    assert result["percentage_change"] > 400.0
+
+
+def test_statistical_traffic_volume_anomaly():
+    """Verify sudden traffic volume surge triggers volume deviation anomaly."""
+    baseline = [100.0, 105.0, 98.0, 102.0, 100.0]
+    result = detect_statistical_anomaly("event_count", current_value=350.0, baseline_values=baseline)
+    assert result is not None
+    assert result["is_anomaly"] is True
+    assert result["anomaly_type"] == "traffic_surge"
+    assert result["percentage_change"] >= 200.0
+
+
 def test_statistical_zero_std_handling():
     """Verify zero variance in baseline does not cause division by zero."""
     baseline = [4.0, 4.0, 4.0, 4.0]

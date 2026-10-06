@@ -180,6 +180,23 @@ def test_api_analytics_services(in_memory_duckdb: DuckDBService):
         app.dependency_overrides.clear()
 
 
+def test_api_analytics_windows(in_memory_duckdb: DuckDBService):
+    """Test GET /api/analytics/windows endpoint for time-windowed rollups."""
+    app.dependency_overrides[get_duckdb_service] = lambda: in_memory_duckdb
+    try:
+        response = client.get("/api/analytics/windows?window_minutes=1")
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) >= 1
+        window_entry = data[0]
+        assert "time_window" in window_entry
+        assert "event_count" in window_entry
+        assert window_entry["event_count"] > 0
+    finally:
+        app.dependency_overrides.clear()
+
+
 # ==============================================================================
 # 3. EventWorker Unit Tests
 # ==============================================================================

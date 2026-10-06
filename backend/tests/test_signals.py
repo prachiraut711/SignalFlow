@@ -393,3 +393,40 @@ def test_api_trigger_correlation_endpoint(sqlite_session: Session):
         assert data["signals"][0]["service"] == "checkout-service"
     finally:
         app.dependency_overrides.clear()
+
+
+def test_already_resolved_signal_behavior(sqlite_session: Session):
+    """
+    Verify that resolving an already-resolved signal is safe/idempotent,
+    and a new subsequent anomaly starts a new OPEN signal instead of updating the resolved one.
+    """
+    service = SignalService()
+    t0 = datetime(2026, 10, 5, 14, 0, 0, tzinfo=timezone.utc)
+    create_sample_anomaly(sqlite_session, service="billing-service", time_window=t0)
+    service.create_or_update_signals(session=sqlite_session)
+
+    open_sigs = service.get_signals(session=sqlite_session, status="OPEN")
+    assert len(open_sigs) == 1
+    sig_1 = open_sigs[0]
+
+    # Resolve first signal
+    resolved_sig = service.resolve_signal(signal_id=sig_1.id, session=sqlite_session)
+    assert resolved_sig.status == "RESOLVED"
+
+    # Resolving again is safe and idempotent
+    resolved_again = service.resolve_signal(signal_id=sig_1.id, session=sqlite_session)
+    assert resolved_again.status == "RESOLVED"
+
+    # Subsequent anomaly for the same service arrives later
+    t1 = datetime(2026, 10, 5, 14, 30, 0, tzinfo=timezone.utc)
+    create_sample_anomaly(sqlite_session, service="billing-service", time_window=t1)
+    service.create_or_update_signals(session=sqlite_session)
+
+    # Must have 1 new OPEN signal, while the resolved signal stays intact
+    all_sigs = service.get_signals(session=sqlite_session)
+    assert len(all_sigs) == 2
+    statuses = {s.id: s.status for s in all_sigs}
+    assert statuses[sig_1.id] == "RESOLVED"
+    new_sig = [s for s in all_sigs if s.id != sig_1.id][0]
+    assert new_sig.status == "OPEN"
+
