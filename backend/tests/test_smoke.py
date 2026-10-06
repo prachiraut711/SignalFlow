@@ -79,13 +79,17 @@ async def test_end_to_end_pipeline_smoke(smoke_env):
     app.dependency_overrides[get_redis_service] = lambda: redis_svc
 
     try:
+        # Ensure fresh stream state for deterministic isolation
+        await redis_svc.ping()
+        try:
+            r_client = redis_svc.get_client()
+            await r_client.delete("signalflow:events")
+        except Exception:
+            pass
+
         # ---------------------------------------------------------------------
         # Step 1: Ingest events via API (POST /api/events)
         # ---------------------------------------------------------------------
-        stream_test_name = "signalflow:test:smoke"
-        event_svc = EventService(redis_service=redis_svc)
-
-        # Ingest baseline normal events
         now = datetime.now(timezone.utc)
         baseline_events = []
         for i in range(5):
