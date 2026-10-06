@@ -49,12 +49,18 @@ class RedisService:
             or self._loop != current_loop
             or (self._loop and self._loop.is_closed())
         ):
+            extra_kwargs: Dict[str, Any] = {}
+            if self.redis_url.startswith("rediss://"):
+                # Accommodate cloud TLS connections (Upstash)
+                extra_kwargs["ssl_cert_reqs"] = None
+
             self._client = aioredis.from_url(
                 self.redis_url,
                 encoding="utf-8",
                 decode_responses=True,
-                socket_connect_timeout=1.5,
-                socket_timeout=2.0,
+                socket_connect_timeout=5.0,
+                socket_timeout=5.0,
+                **extra_kwargs,
             )
             self._loop = current_loop
         return self._client
@@ -62,8 +68,9 @@ class RedisService:
     def _fallback_to_fake(self, reason: Any) -> Any:
         """Initialize in-memory FakeRedis fallback when live server is unreachable."""
         if fake_aioredis is not None and fakeredis is not None:
+            masked_url = self.redis_url.split("@")[-1] if "@" in self.redis_url else self.redis_url
             logger.warning(
-                f"Live Redis unreachable at {self.redis_url} ({reason}). Using in-memory FakeRedis stream fallback."
+                f"Live Redis unreachable at {masked_url} ({reason}). Using in-memory FakeRedis stream fallback."
             )
             if self._fake_server is None:
                 self._fake_server = fakeredis.FakeServer()

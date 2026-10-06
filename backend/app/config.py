@@ -21,16 +21,21 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     
-    # CORS Origins (comma-separated or list)
+    # CORS Origins
+    FRONTEND_URL: str | None = None
     CORS_ORIGINS: List[str] = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ]
     
-    # Relational Database (PostgreSQL) - Placeholder for future phases
+    # Embedded Worker Execution (Render / single-service deployment)
+    # When True, FastAPI starts the event worker in the same event loop
+    EMBED_WORKER: bool = False
+
+    # Relational Database (PostgreSQL / Neon)
     DATABASE_URL: str = "postgresql://signalflow:signalflow_dev@localhost:5432/signalflow_db"
     
-    # Message Broker / Stream Buffer (Redis)
+    # Message Broker / Stream Buffer (Redis / Upstash)
     REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_STREAM_NAME: str = "signalflow:events"
     REDIS_CONSUMER_GROUP: str = "signalflow-processors"

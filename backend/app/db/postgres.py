@@ -28,31 +28,33 @@ def get_engine():
         settings = get_settings()
         db_url = settings.DATABASE_URL
 
-        # Use sync driver for SQLAlchemy synchronous session management
-        # (psycopg2 or sqlite for tests)
+        # Support postgres:// URL prefix commonly provided by Neon / Render
+        if db_url.startswith("postgres://"):
+            db_url = db_url.replace("postgres://", "postgresql://", 1)
         if db_url.startswith("postgresql+asyncpg://"):
-            db_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
+            db_url = db_url.replace("postgresql+asyncpg://", "postgresql://", 1)
 
         if "sqlite" in db_url:
             _engine = create_engine(db_url, connect_args={"check_same_thread": False})
         else:
             try:
+                # connect_timeout=10 accommodates Neon serverless cold-start wakeups
                 temp_engine = create_engine(
                     db_url,
                     pool_pre_ping=True,
                     pool_size=5,
                     max_overflow=10,
-                    connect_args={"connect_timeout": 2}
+                    connect_args={"connect_timeout": 10}
                 )
                 with temp_engine.connect() as conn:
                     pass
                 _engine = temp_engine
-                logger.info(f"Connected to PostgreSQL database at {db_url}")
+                logger.info(f"Connected to PostgreSQL database at {db_url.split('@')[-1] if '@' in db_url else db_url}")
             except Exception as exc:
                 fallback_path = os.path.abspath(os.path.join(os.getcwd(), "data", "signalflow_platform.db"))
                 os.makedirs(os.path.dirname(fallback_path), exist_ok=True)
                 logger.warning(
-                    f"PostgreSQL unreachable at {db_url} ({exc}). Using local store 'sqlite:///{fallback_path}'"
+                    f"PostgreSQL unreachable at {db_url.split('@')[-1] if '@' in db_url else db_url} ({exc}). Using local store 'sqlite:///{fallback_path}'"
                 )
                 _engine = create_engine(f"sqlite:///{fallback_path}", connect_args={"check_same_thread": False})
     return _engine

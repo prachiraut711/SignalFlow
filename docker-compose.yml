@@ -15,6 +15,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - DUCKDB_PATH=/app/data/signalflow.duckdb
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - EMBED_WORKER=false
     depends_on:
       - postgres
       - redis

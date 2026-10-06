@@ -171,6 +171,16 @@ cd frontend && npm run build
 python tests/smoke_test.py
 ```
 
+## Deployment
+
+SignalFlow is pre-configured for free cloud hosting (Render + Neon + Upstash):
+
+- **Backend**: Render Web Service (`EMBED_WORKER=true` runs stream processing in-process; dynamic `$PORT` binding).
+- **Frontend**: Render Static Site (`frontend/dist`, SPA client rewrites via `public/_redirects`).
+- **PostgreSQL**: Neon serverless Postgres (`DATABASE_URL=postgresql://...`).
+- **Redis Streams**: Upstash Redis with TLS (`REDIS_URL=rediss://...`).
+- **Blueprint**: Use `render.yaml` or deploy manually. Connect services using `FRONTEND_URL` and `VITE_API_BASE_URL`.
+
 ## Project Status
 
 Status: Complete for portfolio/demo use.
