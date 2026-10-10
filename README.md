@@ -188,8 +188,3 @@ SignalFlow is pre-configured for free cloud hosting (Render + Neon + Upstash):
 - **Redis Streams**: Upstash Redis with TLS (`REDIS_URL=rediss://...`).
 - **Blueprint**: Use `render.yaml` or deploy manually. Connect services using `FRONTEND_URL` and `VITE_API_BASE_URL`.
 
-## Project Status
-
-Status: Complete for portfolio/demo use.
-
-Core pipeline: Event ingestion → processing → analytics → anomaly detection → incident correlation → AI diagnostics → dashboard.
