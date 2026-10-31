@@ -77,7 +77,7 @@ export const Services: React.FC = () => {
           message={
             searchQuery
               ? `No service matches query "${searchQuery}".`
-              : 'No services currently recorded in DuckDB analytical store.'
+              : 'No services currently recorded.'
           }
           action={searchQuery ? { label: 'Clear Search', onClick: () => setSearchQuery('') } : undefined}
         />

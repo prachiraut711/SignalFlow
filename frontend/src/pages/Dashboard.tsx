@@ -122,14 +122,12 @@ export const Dashboard: React.FC = () => {
         <StatCard
           title="Total Events"
           value={overview?.total_events.toLocaleString() || '0'}
-          subtext="In analytical store"
           icon={Activity}
           variant="default"
         />
         <StatCard
           title="Error Count"
           value={overview?.total_errors.toLocaleString() || '0'}
-          subtext="HTTP 4xx/5xx & failures"
           icon={AlertTriangle}
           variant={overview && overview.total_errors > 0 ? 'warning' : 'default'}
         />
@@ -139,7 +137,7 @@ export const Dashboard: React.FC = () => {
           subtext={
             overview && overview.error_rate > 5.0
               ? 'Elevated baseline'
-              : 'Within normal bounds'
+              : undefined
           }
           icon={TrendingUp}
           variant={
@@ -153,21 +151,18 @@ export const Dashboard: React.FC = () => {
         <StatCard
           title="Avg Latency"
           value={`${overview?.average_latency_ms.toFixed(1) || '0.0'} ms`}
-          subtext="End-to-end telemetry"
           icon={Clock}
           variant="default"
         />
         <StatCard
           title="Active Signals"
           value={activeSignalsCount}
-          subtext="Open correlated incidents"
           icon={Radio}
           variant={activeSignalsCount > 0 ? 'warning' : 'success'}
         />
         <StatCard
           title="Critical Incidents"
           value={criticalSignalsCount}
-          subtext="High-priority triage"
           icon={AlertOctagon}
           variant={criticalSignalsCount > 0 ? 'critical' : 'success'}
         />
@@ -182,7 +177,6 @@ export const Dashboard: React.FC = () => {
               <h3 className="text-sm font-semibold text-white tracking-tight">
                 Event Throughput Over Time
               </h3>
-              <p className="text-xs text-slate-400">1-minute aggregation buckets from DuckDB</p>
             </div>
             <span className="text-[11px] font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
               Live Trend
@@ -198,7 +192,6 @@ export const Dashboard: React.FC = () => {
               <h3 className="text-sm font-semibold text-white tracking-tight">
                 Success vs. Error Distribution
               </h3>
-              <p className="text-xs text-slate-400">Time-window operational breakdown</p>
             </div>
             <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
               Reliability
@@ -218,9 +211,6 @@ export const Dashboard: React.FC = () => {
                 <h3 className="text-sm font-semibold text-white tracking-tight">
                   Service Health Overview
                 </h3>
-                <p className="text-xs text-slate-400">
-                  Microservice operational status derived from error rates
-                </p>
               </div>
               <button
                 onClick={() => navigate('/services')}

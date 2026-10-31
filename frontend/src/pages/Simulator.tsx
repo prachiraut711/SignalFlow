@@ -403,7 +403,6 @@ export const Simulator: React.FC = () => {
           <h2 className="text-sm font-bold text-white uppercase tracking-wider text-slate-300">
             Simulation Parameters
           </h2>
-          <span className="text-[11px] text-slate-500 font-mono">POST /api/events pipeline</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -560,20 +559,6 @@ export const Simulator: React.FC = () => {
           </button>
         </div>
       </form>
-
-      {/* Production Pipeline Architecture Explanation */}
-      <div className="p-4 rounded-xl bg-slate-900/30 border border-slate-800/60 text-slate-400 text-xs space-y-2">
-        <div className="font-semibold text-slate-300 flex items-center gap-2">
-          <Zap className="w-3.5 h-3.5 text-indigo-400" />
-          End-to-End Production Ingestion Flow
-        </div>
-        <p className="text-[11px] leading-relaxed">
-          The event simulator dispatches events through the standard FastAPI ingestion endpoint (
-          <code className="text-slate-300 font-mono">POST /api/events</code>). Telemetry is buffered in Redis Streams,
-          stream-consumed by the EventWorker into DuckDB, scanned by Statistical and Isolation Forest detectors, and
-          correlated into operational signals displayed in real time on the dashboard.
-        </p>
-      </div>
     </div>
   );
 };
